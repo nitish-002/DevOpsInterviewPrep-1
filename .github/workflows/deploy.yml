@@ -54,17 +54,23 @@ jobs:
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v1
 
+    - name: Configure SSH for OS Login
+      run: |
+        gcloud config set compute/use_oslogin true
+
     - name: Transfer Docker image to GCP VM
       run: |
         gcloud compute scp flask-app.tar.gz ${{ secrets.GCP_VM_INSTANCE }}:/tmp/ \
           --zone=${{ secrets.GCP_ZONE }} \
-          --project=${{ secrets.GCP_PROJECT }}
+          --project=${{ secrets.GCP_PROJECT }} \
+          --ssh-flag="-o StrictHostKeyChecking=no"
 
     - name: Deploy to GCP VM
       run: |
         gcloud compute ssh ${{ secrets.GCP_VM_INSTANCE }} \
           --zone=${{ secrets.GCP_ZONE }} \
           --project=${{ secrets.GCP_PROJECT }} \
+          --ssh-flag="-o StrictHostKeyChecking=no" \
           --command="
             # Stop existing container if any
             docker stop flask-app 2>/dev/null || true
